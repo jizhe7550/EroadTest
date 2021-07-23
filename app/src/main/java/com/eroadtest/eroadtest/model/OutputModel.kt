@@ -1,7 +1,7 @@
 package com.eroadtest.eroadtest.model
 
 data class OutputModel(
-    val sensorData:List<SensorDataModel>,
-    val start:Long,
-    val end:Long
+    var sensorData: List<SensorDataModel>,
+    var start: Long = sensorData.first().t_sec,
+    var end: Long = sensorData.last().t_sec,
 )

@@ -9,12 +9,9 @@ import com.eroadtest.eroadtest.model.OutputModel
 import com.eroadtest.eroadtest.model.SensorDataModel
 import com.eroadtest.eroadtest.util.DateUtil
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.lang.Exception
-import java.sql.Timestamp
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.*
 import kotlin.collections.ArrayList
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -24,17 +21,16 @@ class FileHelper constructor(
 ) {
     private val writeList = ArrayList<SensorDataModel>()
 
-    fun writeFile(timestampL: Long) {
+    fun createOutputModel():OutputModel{
+        return OutputModel(writeList)
+    }
+    fun writeFile(timestampL: Long,outputModel:OutputModel) {
         if (!isExternalStorageWritable())
             throw Exception(EXTERNAL_NO_SPACE)
 
         val newFileName = createFileNameByTimestamp(timestampL)
         val myFile = File(context.getExternalFilesDir(null), newFileName)
-        val outputModel = OutputModel(
-            sensorData = writeList,
-            start = writeList.first().t_sec,
-            end = writeList.last().t_sec
-        )
+
         try {
             myFile.bufferedWriter().use { writer ->
                 val string = Gson().toJson(outputModel)
@@ -60,7 +56,21 @@ class FileHelper constructor(
         return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
     }
 
+    fun readFile(filename: String): OutputModel {
+        var outputModel: OutputModel
+        try {
+            val myFile = File(context.getExternalFilesDir(null), filename)
+            myFile.bufferedReader().use { reader ->
+                val outputModelType = object : TypeToken<OutputModel>() {}.type
+                outputModel = Gson().fromJson(reader, outputModelType)
+            }
+            return outputModel
+        } catch (e: Exception) {
+            throw Exception("file $filename read fail!")
+        }
+    }
+
     companion object {
-        const val EXTERNAL_NO_SPACE = "No more space"
+        const val EXTERNAL_NO_SPACE = "Cannot record data"
     }
 }

@@ -15,10 +15,11 @@ import java.util.ArrayList
 class SensorDataManager(
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val fileHelper: FileHelper = FileHelper()
-): SensorEventListener {
+) : SensorEventListener {
 
     private val channel = Channel<SensorDataModel>(Channel.UNLIMITED)
     private val job = Job()
+
     /**
      * this is a timestamp for notice fileHelper to create a record file first time next time.
      * normally it is current timestamp plus 3 mins,
@@ -36,21 +37,21 @@ class SensorDataManager(
     }
 
     private fun sendModelToChannel(model: SensorDataModel) {
-        CoroutineScope(dispatcher+job).launch {
+        CoroutineScope(dispatcher + job).launch {
             Log.i("Sensor", "send${model}")
             channel.send(model)
         }
     }
 
     private fun receiveModelFromChannel() {
-        CoroutineScope(dispatcher+job).launch {
+        CoroutineScope(dispatcher + job).launch {
             for (model in channel) {
                 handleIntervalList(model)
             }
         }
     }
 
-    private fun handleIntervalList(model:SensorDataModel){
+    private fun handleIntervalList(model: SensorDataModel) {
         val modelTimestamp = model.t_sec
         if (noticeWriteFileTimestamp == 0L) {
             createNoticeWriteFileTimestamp(modelTimestamp)
@@ -67,7 +68,9 @@ class SensorDataManager(
                 newList.clear()
                 newList.add(model)
                 createNoticeWriteFileTimestamp(modelTimestamp)
-                fileHelper.writeFile(modelTimestamp)
+                fileHelper.apply {
+                    writeFile(modelTimestamp, createOutputModel())
+                }
             }
         }
     }
@@ -75,7 +78,7 @@ class SensorDataManager(
     /**
      * create the first timestamp to notice fileHelper to do it's task (create file)
      */
-    private fun createNoticeWriteFileTimestamp(timestamp: Long){
+    private fun createNoticeWriteFileTimestamp(timestamp: Long) {
         noticeWriteFileTimestamp = timestamp + CREATE_FILE_INTERVAL
     }
 
@@ -101,7 +104,7 @@ class SensorDataManager(
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
     }
 
-    companion object{
-        const val CREATE_FILE_INTERVAL = 3 * 60 * 1000L
+    companion object {
+        const val CREATE_FILE_INTERVAL = 10 * 1000L//3 * 60 * 1000L
     }
 }
