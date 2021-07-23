@@ -1,6 +1,5 @@
 package com.eroadtest.eroadtest.logic
 
-import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -10,6 +9,7 @@ import androidx.annotation.RequiresApi
 import com.eroadtest.eroadtest.model.SensorDataModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import java.util.ArrayList
 
 @RequiresApi(Build.VERSION_CODES.O)
 class SensorDataManager(
@@ -19,6 +19,17 @@ class SensorDataManager(
 
     private val channel = Channel<SensorDataModel>(Channel.UNLIMITED)
     private val job = Job()
+    /**
+     * this is a timestamp for notice fileHelper to create a record file first time next time.
+     * normally it is current timestamp plus 3 mins,
+     * but when App starts (init 0), it will be the first listened return model timestamp plus + 3 mins
+     */
+    private var noticeWriteFileTimestamp = 0L
+
+    /**
+     * a list for collect models from channel in order to pass fileHelper to write to file
+     */
+    private var newList = ArrayList<SensorDataModel>()
 
     init {
         receiveModelFromChannel()
@@ -34,26 +45,38 @@ class SensorDataManager(
     private fun receiveModelFromChannel() {
         CoroutineScope(dispatcher+job).launch {
             for (model in channel) {
-                 fileHelper.handleCreateFileLogic(model)
+                handleIntervalList(model)
             }
         }
     }
 
-    private fun handleIntervalList(){
-        if (newTimestamp == 0L) {
-            createNextTimestamp(model.t_sec)
+    private fun handleIntervalList(model:SensorDataModel){
+        val modelTimestamp = model.t_sec
+        if (noticeWriteFileTimestamp == 0L) {
+            createNoticeWriteFileTimestamp(modelTimestamp)
         } else {
-            if (newTimestamp >= model.t_sec) {
+            /* if noticeWriteFileTimestamp is greater than a model's return time,
+             * add model to list. Otherwise,that means it is time to notice fileHelper to write
+             * and create next notice timestamp,
+             * clear the list for next interval, but don't forget to add the model that comes in this time.
+             */
+            if (noticeWriteFileTimestamp >= modelTimestamp) {
                 newList.add(model)
             } else {
-                writeList.addAll(newList)
+                fileHelper.addWriteList(newList)
                 newList.clear()
                 newList.add(model)
-                createFileNameByTimestamp(newTimestamp)
-                createNextTimestamp(model.t_sec)
-                writeFile()
+                createNoticeWriteFileTimestamp(modelTimestamp)
+                fileHelper.writeFile(modelTimestamp)
             }
         }
+    }
+
+    /**
+     * create the first timestamp to notice fileHelper to do it's task (create file)
+     */
+    private fun createNoticeWriteFileTimestamp(timestamp: Long){
+        noticeWriteFileTimestamp = timestamp + CREATE_FILE_INTERVAL
     }
 
     fun cleanRes() {
@@ -76,5 +99,9 @@ class SensorDataManager(
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+    }
+
+    companion object{
+        const val CREATE_FILE_INTERVAL = 3 * 60 * 1000L
     }
 }
