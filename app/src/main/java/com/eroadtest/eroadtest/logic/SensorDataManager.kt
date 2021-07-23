@@ -5,16 +5,24 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.util.Log
 import androidx.lifecycle.LifecycleService
 import com.eroadtest.eroadtest.MyApplication
 import com.eroadtest.eroadtest.model.SensorDataModel
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 
-class SensorDataManager: SensorEventListener {
+class SensorDataManager(
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+): SensorEventListener {
 
     private var applicationContext: Context = MyApplication.applicationContext()
+    private val channel = Channel<SensorDataModel>(Channel.UNLIMITED)
+    private val job = Job()
 
     init {
         setUpSensorStuff()
+        receiveModelFromChannel()
     }
 
     private fun setUpSensorStuff() {
@@ -33,8 +41,24 @@ class SensorDataManager: SensorEventListener {
         }
     }
 
-    fun cleanRes(){
+    private fun sendModelToChannel(model: SensorDataModel) {
+        CoroutineScope(dispatcher+job).launch {
+            Log.i("Sensor", "send${model}")
+            channel.send(model)
+        }
+    }
 
+    private fun receiveModelFromChannel() {
+        CoroutineScope(dispatcher+job).launch {
+            for (model in channel) {
+                // TODO handleCreateFileLogic(model)
+            }
+        }
+    }
+
+    fun cleanRes() {
+        job?.cancel()
+        channel?.close()
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
@@ -45,6 +69,9 @@ class SensorDataManager: SensorEventListener {
 
             // create a model for every callback
             val sensorDataModel = SensorDataModel(x_acc = x, y_acc = y, z_acc = z)
+
+            // send it to channel, make sure it is in sequence to handle, even suspend.
+            sendModelToChannel(sensorDataModel)
         }
     }
 
