@@ -7,6 +7,7 @@ import androidx.annotation.RequiresApi
 import com.eroadtest.eroadtest.MyApplication
 import com.eroadtest.eroadtest.model.OutputModel
 import com.eroadtest.eroadtest.model.SensorDataModel
+import com.eroadtest.eroadtest.util.DateUtil
 import com.google.gson.Gson
 import java.io.File
 import java.lang.Exception
@@ -18,7 +19,8 @@ import kotlin.collections.ArrayList
 
 @RequiresApi(Build.VERSION_CODES.O)
 class FileHelper constructor(
-    private val context: Context = MyApplication.applicationContext()
+    private val context: Context = MyApplication.applicationContext(),
+    private val dateUtil: DateUtil = DateUtil()
 ) {
     private val writeList = ArrayList<SensorDataModel>()
 
@@ -38,9 +40,9 @@ class FileHelper constructor(
                 val string = Gson().toJson(outputModel)
                 writer.write(string)
             }
-        }catch (e:Exception){
+        } catch (e: Exception) {
             throw Exception("file $newFileName wrote fail!")
-        }finally {
+        } finally {
             writeList.clear()
         }
     }
@@ -50,7 +52,7 @@ class FileHelper constructor(
     }
 
     private fun createFileNameByTimestamp(timestamp: Long): String {
-        val datePart = dateFormat(timestamp)
+        val datePart = dateUtil.dateFormat(timestamp)
         return "Sensor_$datePart.sns"
     }
 
@@ -58,16 +60,7 @@ class FileHelper constructor(
         return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
     }
 
-    private fun dateFormat(timestampL: Long): String {
-        val stamp = Timestamp(timestampL)
-        val date = Date(stamp.time).toInstant()
-        return DateTimeFormatter
-            .ofPattern("yyyy-MM-dd-hh-mm-ss-SSS")
-            .withZone(ZoneId.of("UTC"))
-            .format(date)
-    }
-
-    companion object{
+    companion object {
         const val EXTERNAL_NO_SPACE = "No more space"
     }
 }
