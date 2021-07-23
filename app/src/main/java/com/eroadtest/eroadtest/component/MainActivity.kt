@@ -1,8 +1,9 @@
-package com.eroadtest.eroadtest
+package com.eroadtest.eroadtest.component
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import com.eroadtest.eroadtest.R
 
 class MainActivity : AppCompatActivity() {
     private lateinit var sensorServiceIntent: Intent

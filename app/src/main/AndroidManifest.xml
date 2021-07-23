@@ -11,12 +11,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EroadTest">
         <service
-            android:name=".SensorService"
+            android:name=".component.SensorService"
             android:enabled="true"
-            android:exported="true"
+            android:exported="false"
             android:priority="1000"></service>
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".component.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

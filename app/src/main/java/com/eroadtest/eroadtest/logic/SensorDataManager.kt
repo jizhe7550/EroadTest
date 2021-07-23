@@ -4,41 +4,24 @@ import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
-import android.hardware.SensorManager
+import android.os.Build
 import android.util.Log
-import androidx.lifecycle.LifecycleService
-import com.eroadtest.eroadtest.MyApplication
+import androidx.annotation.RequiresApi
 import com.eroadtest.eroadtest.model.SensorDataModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 
+@RequiresApi(Build.VERSION_CODES.O)
 class SensorDataManager(
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val fileHelper: FileHelper = FileHelper()
 ): SensorEventListener {
 
-    private var applicationContext: Context = MyApplication.applicationContext()
     private val channel = Channel<SensorDataModel>(Channel.UNLIMITED)
     private val job = Job()
 
     init {
-        setUpSensorStuff()
         receiveModelFromChannel()
-    }
-
-    private fun setUpSensorStuff() {
-        // Create the sensor manager
-        val sensorManager =
-            applicationContext.getSystemService(LifecycleService.SENSOR_SERVICE) as SensorManager
-
-        // Specify the sensor you want to listen to
-        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also { accelerometer ->
-            sensorManager.registerListener(
-                this,
-                accelerometer,
-                SensorManager.SENSOR_DELAY_FASTEST,
-                SensorManager.SENSOR_DELAY_FASTEST
-            )
-        }
     }
 
     private fun sendModelToChannel(model: SensorDataModel) {
@@ -51,14 +34,31 @@ class SensorDataManager(
     private fun receiveModelFromChannel() {
         CoroutineScope(dispatcher+job).launch {
             for (model in channel) {
-                // TODO handleCreateFileLogic(model)
+                 fileHelper.handleCreateFileLogic(model)
+            }
+        }
+    }
+
+    private fun handleIntervalList(){
+        if (newTimestamp == 0L) {
+            createNextTimestamp(model.t_sec)
+        } else {
+            if (newTimestamp >= model.t_sec) {
+                newList.add(model)
+            } else {
+                writeList.addAll(newList)
+                newList.clear()
+                newList.add(model)
+                createFileNameByTimestamp(newTimestamp)
+                createNextTimestamp(model.t_sec)
+                writeFile()
             }
         }
     }
 
     fun cleanRes() {
-        job?.cancel()
-        channel?.close()
+        job.cancel()
+        channel.close()
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
