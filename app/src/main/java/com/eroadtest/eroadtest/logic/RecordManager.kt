@@ -1,10 +1,8 @@
 package com.eroadtest.eroadtest.logic
 
-import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
-import com.eroadtest.eroadtest.MyApplication
-import com.eroadtest.eroadtest.model.OutputModel
+import com.eroadtest.eroadtest.model.modelFile
 import com.eroadtest.eroadtest.model.SensorDataModel
 import com.eroadtest.eroadtest.util.DateUtil
 import com.eroadtest.eroadtest.util.FileHelper
@@ -18,14 +16,14 @@ class RecordManager constructor(
 ) {
     private val writeList = ArrayList<SensorDataModel>()
 
-    fun createOutputModel(): OutputModel {
-        return OutputModel(writeList)
+    fun createOutputModel(): modelFile {
+        return modelFile(writeList)
     }
 
-    fun recordDataToFile(timestampL: Long, outputModel: OutputModel) {
-        val newFileName = createFileNameByTimestamp(timestampL)
+    fun recordDataToFile(timestampL: Long, outputModel: modelFile) {
+        val fileName = createFileNameByTimestamp(timestampL)
         val outputModelJson = Gson().toJson(outputModel)
-        fileUtil.writeFile(newFileName, outputModelJson)
+        fileUtil.writeFile(fileName, outputModelJson)
         writeList.clear()
     }
 

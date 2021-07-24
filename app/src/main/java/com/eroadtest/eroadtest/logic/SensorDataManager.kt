@@ -55,7 +55,7 @@ class SensorDataManager(
     private fun handleIntervalList(model: SensorDataModel) {
         val modelTimestamp = model.t_sec
         if (noticeWriteFileTimestamp == 0L) {
-            createNoticeWriteFileTimestamp(modelTimestamp)
+            getFileCreateTime(modelTimestamp)
         } else {
             /* if noticeWriteFileTimestamp is greater than a model's return time,
              * add model to list.
@@ -68,7 +68,7 @@ class SensorDataManager(
                 recordManager.addWriteList(currentList)
                 currentList.clear()
                 currentList.add(model)
-                createNoticeWriteFileTimestamp(noticeWriteFileTimestamp)
+                getFileCreateTime(noticeWriteFileTimestamp)
                 recordManager.apply {
                     recordDataToFile(noticeWriteFileTimestamp, createOutputModel())
                 }
@@ -79,7 +79,7 @@ class SensorDataManager(
     /**
      * create the first timestamp to notice fileHelper to do it's task (create file)
      */
-    private inline fun createNoticeWriteFileTimestamp(timestamp: Long) {
+    private inline fun getFileCreateTime(timestamp: Long) {
         noticeWriteFileTimestamp = timestamp + CREATE_FILE_INTERVAL
     }
 
