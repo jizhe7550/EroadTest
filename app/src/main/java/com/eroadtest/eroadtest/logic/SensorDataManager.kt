@@ -103,6 +103,6 @@ class SensorDataManager(
     }
 
     companion object {
-        const val CREATE_FILE_INTERVAL = 10 * 1000L//3 * 60 * 1000L
+        const val CREATE_FILE_INTERVAL = 3 * 60 * 1000L
     }
 }

@@ -9,16 +9,12 @@ import com.eroadtest.eroadtest.model.SensorDataModel
 import com.eroadtest.eroadtest.util.DateUtil
 import com.eroadtest.eroadtest.util.FileHelper
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.*
-import java.lang.Exception
 
 @RequiresApi(Build.VERSION_CODES.O)
 class SearchDataHelper constructor(
-    private val context: Context = MyApplication.applicationContext(),
     private val dateUtil: DateUtil = DateUtil(),
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val recordManager: RecordManager = RecordManager(),
     private val fileHelper: FileHelper = FileHelper(),
 ) {
     /**

@@ -13,7 +13,6 @@ import kotlin.collections.ArrayList
 
 @RequiresApi(Build.VERSION_CODES.O)
 class RecordManager constructor(
-    private val context: Context = MyApplication.applicationContext(),
     private val dateUtil: DateUtil = DateUtil(),
     private val fileUtil: FileHelper = FileHelper()
 ) {
