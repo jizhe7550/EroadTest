@@ -1,5 +1,6 @@
 package com.eroadtest.eroadtest.util
 
+import android.content.Context
 import android.os.Environment
 import com.eroadtest.eroadtest.MyApplication
 import com.eroadtest.eroadtest.model.OutputModel
@@ -8,14 +9,16 @@ import com.google.gson.reflect.TypeToken
 import java.io.File
 import kotlin.Exception
 
-class FileHelper {
+class FileHelper constructor(
+    private val context: Context = MyApplication.applicationContext()
+) {
 
     private fun isExternalStorageWritable(): Boolean {
         return Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
     }
 
     private fun getExternalFile(filename:String):File{
-        return File(MyApplication.applicationContext().getExternalFilesDir(null), filename)
+        return File(context.getExternalFilesDir(null), filename)
     }
 
     fun writeFile(filename: String, outputModelJson:String){
@@ -33,7 +36,7 @@ class FileHelper {
     }
 
     fun listRecordFileNames():List<String>?{
-        var file = MyApplication.applicationContext().getExternalFilesDir(null)
+        var file = context.getExternalFilesDir(null)
         var files = file?.listFiles()
         return files?.map {
             it.name
@@ -41,7 +44,7 @@ class FileHelper {
     }
 
     fun listRecordFiles(): Array<out File>? {
-        var file = MyApplication.applicationContext().getExternalFilesDir(null)
+        var file = context.getExternalFilesDir(null)
         return file?.listFiles()
     }
 

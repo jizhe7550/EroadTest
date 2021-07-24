@@ -6,10 +6,10 @@ import android.content.Context
 class MyApplication : Application() {
 
     companion object {
-        private var instance: MyApplication? = null
+        private lateinit var instance: MyApplication
 
         fun applicationContext(): Context {
-            return instance!!.applicationContext
+            return instance.applicationContext
         }
     }
 
