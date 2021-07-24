@@ -38,9 +38,9 @@ class SensorDataManager(
     }
 
     private fun sendModelToChannel(model: SensorDataModel) {
-        Log.i(TAG, "send${model}")
         if (channel.isClosedForSend)
             return
+        Log.i(TAG, "offer${model}")
         channel.offer(model)
     }
 
@@ -93,6 +93,8 @@ class SensorDataManager(
             // create a model for every callback
             val sensorDataModel = event.toSensorDataModel()
             // send it to channel, make sure it is in sequence to handle, even suspend.
+
+            Log.i(TAG, "callBack${sensorDataModel}")
             sendModelToChannel(sensorDataModel)
         }
     }

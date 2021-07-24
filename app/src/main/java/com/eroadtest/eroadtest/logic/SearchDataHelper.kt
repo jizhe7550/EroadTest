@@ -21,8 +21,10 @@ class SearchDataHelper constructor(
     private val recordManager: RecordManager = RecordManager(),
     private val fileHelper: FileHelper = FileHelper(),
 ) {
-
     /**
+     * Implement a method which takes start and end times as parameter
+     * and creates a JSON file in the above format, with all the accelerometer samples
+     * recorded in the given interval.
      *
      */
     fun searchDataByTime(start: Long, end: Long) {
@@ -31,7 +33,7 @@ class SearchDataHelper constructor(
             val files = fileHelper.listRecordFiles()
             files?.forEach { file ->
                 // get date part in filename
-                val dateStr = file.name.substring(7, file.name.length - 4)
+                val dateStr = fileHelper.getDateStrFromSnsFileName(file.name)
                 val timestamp = dateUtil.dateStrToTimestamp(dateStr)
                 if (timestamp in start - SensorDataManager.CREATE_FILE_INTERVAL..end) {
                     val outputModel = CoroutineScope(dispatcher).async {
@@ -41,6 +43,18 @@ class SearchDataHelper constructor(
                     sensorDataModels.addAll(sensorData)
                 }
             }
+
+            // TODO: handle edge values in the earliest file and the latest file with filter files [sensorDataModels]
+
+            val outputModel = OutputModel(sensorDataModels)
+            val outputFilename = createSearchJsonFileName()
+            val outputModelJson = Gson().toJson(outputModel)
+            fileHelper.writeFile(outputFilename,outputModelJson)
         }
+    }
+
+    private fun createSearchJsonFileName(): String {
+        val datePart = dateUtil.dateFormat(System.currentTimeMillis())
+        return "Sensor_$datePart.json"
     }
 }

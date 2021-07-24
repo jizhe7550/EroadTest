@@ -6,7 +6,7 @@ import com.eroadtest.eroadtest.model.OutputModel
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File
-import java.lang.Exception
+import kotlin.Exception
 
 class FileHelper {
 
@@ -59,7 +59,21 @@ class FileHelper {
         }
     }
 
+    /**
+     * get date String from filename, format like Sensor_YYYY-MM-dd-hh-mm-ss-SSS.sns
+     *
+     * for example, filename Sensor_YYYY-MM-dd-hh-mm-ss-SSS.sns will return YYYY-MM-dd-hh-mm-ss-SSS
+     */
+    fun getDateStrFromSnsFileName(filename: String):String{
+        try {
+            return filename.substring(7, filename.length - 4)
+        }catch (e:Exception){
+            throw Exception(WRONG_FORMAT_FOR_FILENAME)
+        }
+    }
+
     companion object {
         const val EXTERNAL_NO_SPACE = "Cannot record data"
+        const val WRONG_FORMAT_FOR_FILENAME = "Wrong format for filename"
     }
 }
