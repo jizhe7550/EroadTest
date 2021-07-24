@@ -30,10 +30,8 @@ class SearchDataHelper constructor(
                 val dateStr = fileHelper.getDateStrFromSnsFileName(file.name)
                 val timestamp = dateUtil.dateStrToTimestamp(dateStr)
                 if (timestamp in start - SensorDataManager.CREATE_FILE_INTERVAL..end) {
-                    val outputModel = CoroutineScope(dispatcher).async {
-                        fileHelper.readFile(file.name)
-                    }
-                    val sensorData = outputModel.await().sensorData
+                    val outputModel = fileHelper.readFile(file.name)
+                    val sensorData = outputModel.sensorData
                     sensorDataModels.addAll(sensorData)
                 }
             }
@@ -43,7 +41,7 @@ class SearchDataHelper constructor(
             val outputModel = OutputModel(sensorDataModels)
             val outputFilename = "Sensor_${dateUtil.dateFormat(System.currentTimeMillis())}.json"
             val outputModelJson = Gson().toJson(outputModel)
-            fileHelper.writeFile(outputFilename,outputModelJson)
+            fileHelper.writeFile(outputFilename, outputModelJson)
         }
     }
 }
