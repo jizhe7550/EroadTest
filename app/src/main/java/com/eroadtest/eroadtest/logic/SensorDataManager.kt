@@ -38,11 +38,6 @@ class SensorDataManager(
      */
     private var currentList = ArrayList<SensorDataModel>()
 
-    /**
-     * a list for writing file
-     */
-    private val writeList = ArrayList<SensorDataModel>()
-
     init {
         receiveModelFromChannel()
     }
@@ -97,12 +92,10 @@ class SensorDataManager(
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
     }
 
-    private fun recordDataToFile(timestamp: Long, tempList: ArrayList<SensorDataModel>) {
-        writeList.addAll(tempList)
+    private fun recordDataToFile(timestamp: Long, dataList: ArrayList<SensorDataModel>) {
         val fileName = "Sensor_${dateUtil.dateFormat(timestamp)}.sns"
-        val outputModelJson = Gson().toJson(OutputModel(writeList))
+        val outputModelJson = Gson().toJson(OutputModel(dataList))
         fileHelper.writeFile(fileName, outputModelJson)
-        writeList.clear()
     }
 
     fun cleanRes() {
