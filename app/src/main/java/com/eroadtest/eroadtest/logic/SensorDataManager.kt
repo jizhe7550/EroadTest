@@ -6,6 +6,7 @@ import android.hardware.SensorEventListener
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.eroadtest.eroadtest.component.TAG
 import com.eroadtest.eroadtest.model.SensorDataModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -14,7 +15,7 @@ import java.util.ArrayList
 @RequiresApi(Build.VERSION_CODES.O)
 class SensorDataManager(
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val fileHelper: FileHelper = FileHelper()
+    private val recordManager: RecordManager = RecordManager()
 ) : SensorEventListener {
 
     private val channel = Channel<SensorDataModel>(Channel.UNLIMITED)
@@ -30,17 +31,17 @@ class SensorDataManager(
     /**
      * a list for collect models from channel in order to pass fileHelper to write to file
      */
-    private var newList = ArrayList<SensorDataModel>()
+    private var currentList = ArrayList<SensorDataModel>()
 
     init {
         receiveModelFromChannel()
     }
 
     private fun sendModelToChannel(model: SensorDataModel) {
-        CoroutineScope(dispatcher + job).launch {
-            Log.i("Sensor", "send${model}")
-            channel.send(model)
-        }
+        Log.i(TAG, "send${model}")
+        if (channel.isClosedForSend)
+            return
+        channel.offer(model)
     }
 
     private fun receiveModelFromChannel() {
@@ -57,19 +58,19 @@ class SensorDataManager(
             createNoticeWriteFileTimestamp(modelTimestamp)
         } else {
             /* if noticeWriteFileTimestamp is greater than a model's return time,
-             * add model to list. Otherwise,that means it is time to notice fileHelper to write
-             * and create next notice timestamp,
+             * add model to list.
+             * Otherwise,that means it is time to notice fileHelper to write and create next notice timestamp,
              * clear the list for next interval, but don't forget to add the model that comes in this time.
              */
             if (noticeWriteFileTimestamp >= modelTimestamp) {
-                newList.add(model)
+                currentList.add(model)
             } else {
-                fileHelper.addWriteList(newList)
-                newList.clear()
-                newList.add(model)
-                createNoticeWriteFileTimestamp(modelTimestamp)
-                fileHelper.apply {
-                    writeFile(modelTimestamp, createOutputModel())
+                recordManager.addWriteList(currentList)
+                currentList.clear()
+                currentList.add(model)
+                createNoticeWriteFileTimestamp(noticeWriteFileTimestamp)
+                recordManager.apply {
+                    recordDataToFile(noticeWriteFileTimestamp, createOutputModel())
                 }
             }
         }
@@ -78,7 +79,7 @@ class SensorDataManager(
     /**
      * create the first timestamp to notice fileHelper to do it's task (create file)
      */
-    private fun createNoticeWriteFileTimestamp(timestamp: Long) {
+    private inline fun createNoticeWriteFileTimestamp(timestamp: Long) {
         noticeWriteFileTimestamp = timestamp + CREATE_FILE_INTERVAL
     }
 
@@ -89,13 +90,8 @@ class SensorDataManager(
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event?.sensor?.type == Sensor.TYPE_ACCELEROMETER) {
-            val x = event.values[0]
-            val y = event.values[1]
-            val z = event.values[2]
-
             // create a model for every callback
-            val sensorDataModel = SensorDataModel(x_acc = x, y_acc = y, z_acc = z)
-
+            val sensorDataModel = event.toSensorDataModel()
             // send it to channel, make sure it is in sequence to handle, even suspend.
             sendModelToChannel(sensorDataModel)
         }

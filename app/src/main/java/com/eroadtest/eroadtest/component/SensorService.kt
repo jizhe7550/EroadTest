@@ -6,6 +6,7 @@ import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.annotation.RequiresApi
 import com.eroadtest.eroadtest.logic.SensorDataManager
 
@@ -13,7 +14,7 @@ import com.eroadtest.eroadtest.logic.SensorDataManager
 class SensorService : Service() {
 
     private var sensorDataManager = SensorDataManager()
-
+    private lateinit var sensorManager:SensorManager
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         setUpSensorStuff()
@@ -23,7 +24,7 @@ class SensorService : Service() {
 
     private fun setUpSensorStuff() {
         // Create the sensor manager
-        val sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
 
         // Specify the sensor you want to listen to
         sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also { accelerometer ->
@@ -37,7 +38,9 @@ class SensorService : Service() {
     }
 
     override fun onDestroy() {
+        sensorManager.unregisterListener(sensorDataManager)
         sensorDataManager.cleanRes()
+        Log.i(TAG,"service destroy")
         super.onDestroy()
     }
 
