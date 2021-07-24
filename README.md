@@ -11,8 +11,8 @@ component:
 
 logic:
  1. SensorDataManager: A class for handling sensor data which is using a channel to get and send them sequentially
- 2. RecordManager: record data in memory, later write to file
- 3. SearchDataHelper: A class for search data with a given interval
+  and then write to file
+ 2. SearchDataHelper: A class for search data with a given interval
 
 TODO: 
  1.handle edge values in the earliest file and the latest file with filter files [sensorDataModels]

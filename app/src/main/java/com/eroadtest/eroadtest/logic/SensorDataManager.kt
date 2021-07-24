@@ -7,7 +7,11 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.eroadtest.eroadtest.component.TAG
+import com.eroadtest.eroadtest.model.OutputModel
 import com.eroadtest.eroadtest.model.SensorDataModel
+import com.eroadtest.eroadtest.util.DateUtil
+import com.eroadtest.eroadtest.util.FileHelper
+import com.google.gson.Gson
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.util.ArrayList
@@ -15,7 +19,8 @@ import java.util.ArrayList
 @RequiresApi(Build.VERSION_CODES.O)
 class SensorDataManager(
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val recordManager: RecordManager = RecordManager()
+    private val fileHelper: FileHelper = FileHelper(),
+    private val dateUtil: DateUtil = DateUtil()
 ) : SensorEventListener {
 
     private val channel = Channel<SensorDataModel>(Channel.UNLIMITED)
@@ -26,12 +31,17 @@ class SensorDataManager(
      * normally it is current timestamp plus 3 mins,
      * but when App starts (init 0), it will be the first listened return model timestamp plus + 3 mins
      */
-    private var noticeWriteFileTimestamp = 0L
+    private var fileCreationTime = 0L
 
     /**
-     * a list for collect models from channel in order to pass fileHelper to write to file
+     * a list for collect models from channel in order to get data
      */
     private var currentList = ArrayList<SensorDataModel>()
+
+    /**
+     * a list for writing file
+     */
+    private val writeList = ArrayList<SensorDataModel>()
 
     init {
         receiveModelFromChannel()
@@ -54,38 +64,23 @@ class SensorDataManager(
 
     private fun handleIntervalList(model: SensorDataModel) {
         val modelTimestamp = model.t_sec
-        if (noticeWriteFileTimestamp == 0L) {
-            getFileCreateTime(modelTimestamp)
+        if (fileCreationTime == 0L) {
+            fileCreationTime = modelTimestamp + CREATE_FILE_INTERVAL
         } else {
-            /* if noticeWriteFileTimestamp is greater than a model's return time,
+            /* if fileCreationTime is greater than a model's return time,
              * add model to list.
              * Otherwise,that means it is time to notice fileHelper to write and create next notice timestamp,
              * clear the list for next interval, but don't forget to add the model that comes in this time.
              */
-            if (noticeWriteFileTimestamp >= modelTimestamp) {
+            if (fileCreationTime >= modelTimestamp) {
                 currentList.add(model)
             } else {
-                recordManager.addWriteList(currentList)
+                recordDataToFile(fileCreationTime, currentList)
                 currentList.clear()
                 currentList.add(model)
-                getFileCreateTime(noticeWriteFileTimestamp)
-                recordManager.apply {
-                    recordDataToFile(noticeWriteFileTimestamp, createOutputModel())
-                }
+                fileCreationTime += CREATE_FILE_INTERVAL
             }
         }
-    }
-
-    /**
-     * create the first timestamp to notice fileHelper to do it's task (create file)
-     */
-    private inline fun getFileCreateTime(timestamp: Long) {
-        noticeWriteFileTimestamp = timestamp + CREATE_FILE_INTERVAL
-    }
-
-    fun cleanRes() {
-        job.cancel()
-        channel.close()
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
@@ -100,6 +95,19 @@ class SensorDataManager(
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+    }
+
+    private fun recordDataToFile(timestamp: Long, tempList: ArrayList<SensorDataModel>) {
+        writeList.addAll(tempList)
+        val fileName = "Sensor_${dateUtil.dateFormat(timestamp)}.sns"
+        val outputModelJson = Gson().toJson(OutputModel(writeList))
+        fileHelper.writeFile(fileName, outputModelJson)
+        writeList.clear()
+    }
+
+    fun cleanRes() {
+        job.cancel()
+        channel.close()
     }
 
     companion object {

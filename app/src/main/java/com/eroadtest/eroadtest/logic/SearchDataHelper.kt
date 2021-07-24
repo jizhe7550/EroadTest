@@ -41,14 +41,9 @@ class SearchDataHelper constructor(
             // TODO: handle edge values in the earliest file and the latest file with filter files [sensorDataModels]
 
             val outputModel = OutputModel(sensorDataModels)
-            val outputFilename = createSearchJsonFileName()
+            val outputFilename = "Sensor_${dateUtil.dateFormat(System.currentTimeMillis())}.json"
             val outputModelJson = Gson().toJson(outputModel)
             fileHelper.writeFile(outputFilename,outputModelJson)
         }
-    }
-
-    private fun createSearchJsonFileName(): String {
-        val datePart = dateUtil.dateFormat(System.currentTimeMillis())
-        return "Sensor_$datePart.json"
     }
 }
