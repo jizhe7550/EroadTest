@@ -2,7 +2,7 @@ package com.eroadtest.eroadtest.util
 
 import android.os.Environment
 import com.eroadtest.eroadtest.MyApplication
-import com.eroadtest.eroadtest.model.modelFile
+import com.eroadtest.eroadtest.model.OutputModel
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File
@@ -45,12 +45,12 @@ class FileHelper {
         return file?.listFiles()
     }
 
-    fun readFile(filename: String): modelFile {
-        var outputModel: modelFile
+    fun readFile(filename: String): OutputModel {
+        var outputModel: OutputModel
         try {
             val myFile = getExternalFile(filename)
             myFile.bufferedReader().use { reader ->
-                val outputModelType = object : TypeToken<modelFile>() {}.type
+                val outputModelType = object : TypeToken<OutputModel>() {}.type
                 outputModel = Gson().fromJson(reader, outputModelType)
             }
             return outputModel

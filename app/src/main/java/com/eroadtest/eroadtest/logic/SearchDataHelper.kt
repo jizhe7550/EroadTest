@@ -2,7 +2,7 @@ package com.eroadtest.eroadtest.logic
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import com.eroadtest.eroadtest.model.modelFile
+import com.eroadtest.eroadtest.model.OutputModel
 import com.eroadtest.eroadtest.model.SensorDataModel
 import com.eroadtest.eroadtest.util.DateUtil
 import com.eroadtest.eroadtest.util.FileHelper
@@ -40,7 +40,7 @@ class SearchDataHelper constructor(
 
             // TODO: handle edge values in the earliest file and the latest file with filter files [sensorDataModels]
 
-            val outputModel = modelFile(sensorDataModels)
+            val outputModel = OutputModel(sensorDataModels)
             val outputFilename = createSearchJsonFileName()
             val outputModelJson = Gson().toJson(outputModel)
             fileHelper.writeFile(outputFilename,outputModelJson)
