@@ -23,25 +23,28 @@ class SearchDataHelper constructor(
      */
     fun searchDataByTime(start: Long, end: Long) {
         CoroutineScope(dispatcher).launch {
-            var sensorDataModels = ArrayList<SensorDataModel>()
-            val files = fileHelper.listRecordFiles()
-            files?.forEach { file ->
-                // get date part in filename
-                val dateStr = fileHelper.getDateStrFromSnsFileName(file.name)
-                val timestamp = dateUtil.dateStrToTimestamp(dateStr)
-                if (timestamp in start - SensorDataManager.CREATE_FILE_INTERVAL..end) {
-                    val outputModel = fileHelper.readFile(file.name)
-                    val sensorData = outputModel.sensorData
-                    sensorDataModels.addAll(sensorData)
-                }
-            }
-
+            var sensorDataModels = addFileDataToList(start,end)
             // TODO: handle edge values in the earliest file and the latest file with filter files [sensorDataModels]
-
             val outputModel = OutputModel(sensorDataModels)
             val outputFilename = "Sensor_${dateUtil.dateFormat(System.currentTimeMillis())}.json"
             val outputModelJson = Gson().toJson(outputModel)
             fileHelper.writeFile(outputFilename, outputModelJson)
         }
+    }
+
+    suspend fun addFileDataToList(start: Long, end: Long): ArrayList<SensorDataModel> {
+        var sensorDataModels = ArrayList<SensorDataModel>()
+        val files = fileHelper.listRecordFiles()
+        files?.forEach { file ->
+            // get date part in filename
+            val dateStr = fileHelper.getDateStrFromSnsFileName(file.name)
+            val timestamp = dateUtil.dateStrToTimestamp(dateStr)
+            if (timestamp in start - SensorDataManager.CREATE_FILE_INTERVAL..end) {
+                val outputModel = fileHelper.readFile(file.name)
+                val sensorData = outputModel.sensorData
+                sensorDataModels.addAll(sensorData)
+            }
+        }
+        return sensorDataModels
     }
 }
